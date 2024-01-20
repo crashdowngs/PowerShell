@@ -1,0 +1,51 @@
+# This script get a list of distribution groups from Office 365 and members
+# Created with ChatGPT 3.5
+# Import the Exchange Online PowerShell module
+Import-Module ExchangeOnlineManagement
+
+# Connect to Exchange Online
+Connect-ExchangeOnline -UserPrincipalName user@domain.com
+# Get a list of distribution groups
+$distributionGroups = Get-DistributionGroup
+
+# Create an array to store the results
+$results = @()
+
+# Iterate through each distribution group
+foreach ($group in $distributionGroups) {
+    $groupObject = [PSCustomObject]@{
+        'GroupName' = $group.DisplayName
+        'GroupMembers' = @()
+    }
+
+    # Get members of the distribution group
+    $members = Get-DistributionGroupMember -Identity $group.PrimarySmtpAddress
+
+    # Convert members to a string representation
+    $membersString = $members | ForEach-Object { "$($_.DisplayName)" }
+
+    # Add members to the group object
+    $groupObject.GroupMembers = $membersString -join ', '
+
+    # Add the group object to the results array
+    $results += $groupObject
+}
+
+# Convert results to a flat array for CSV export
+$flatResults = foreach ($result in $results) {
+    [PSCustomObject]@{
+        'GroupName'     = $result.GroupName
+        'GroupMembers'  = $result.GroupMembers -join '; '  # Adjust separator as needed
+    }
+}
+
+# Export results to CSV
+$flatResults | Export-Csv -Path "DistributionGroupsAndMembers.csv" -NoTypeInformation
+
+# Display a success message
+Write-Host "Results exported to DistributionGroupsAndMembers.csv"
+# Export results to CSV
+$results | Export-Csv -Path "DistributionGroupsAndMembers.csv" -NoTypeInformation
+
+# Display a success message
+Write-Host "Results exported to DistributionGroupsAndMembers.csv"
